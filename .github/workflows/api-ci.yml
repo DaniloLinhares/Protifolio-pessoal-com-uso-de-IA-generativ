@@ -1,0 +1,48 @@
+name: CI - API
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+
+jobs:
+  build-and-test:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Iniciar servidor e verificar saúde
+        run: |
+          npm start &
+          sleep 3
+          curl -f http://localhost:3000/ || exit 1
+          kill %1
+
+      - name: Instalar Playwright
+        run: npx playwright install --with-deps
+
+      - name: Executar testes automatizados
+        run: npx playwright test
+
+      - name: Upload relatório de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-api
+          path: playwright-report/
+          retention-days: 7
