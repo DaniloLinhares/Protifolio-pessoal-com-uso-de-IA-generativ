@@ -19,7 +19,6 @@ app.get('/', (req, res) => {
   res.json({
     mensagem: 'API de Agendamento Médico',
     versao: '1.0.0',
-    status: 'online',
     documentacao: '/api-docs'
   });
 });
