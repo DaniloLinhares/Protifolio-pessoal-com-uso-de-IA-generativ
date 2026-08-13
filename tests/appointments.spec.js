@@ -6,7 +6,7 @@ const AuthPage = require('./pages/AuthPage');
 const { getNextWeekday, getNextSaturday, getNextSunday } = require('./helpers/dateHelper');
 const { createApiContext, getAdminToken, createPatientAndLogin, createDoctor } = require('./helpers/setupHelper');
 
-test.describe('Consulta de Disponibilidade', () => {
+test.describe('Consulta Disponibilidade', () => {
   let medicoId;
   let pacienteToken;
 
