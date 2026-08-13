@@ -18,7 +18,7 @@ app.use('/api/v1', routes);
 app.get('/', (req, res) => {
   res.json({
     mensagem: 'API de Agendamento Médico',
-    versao: '1.0.0',
+    versao: '1.0.1',
     documentacao: '/api-docs'
   });
 });
