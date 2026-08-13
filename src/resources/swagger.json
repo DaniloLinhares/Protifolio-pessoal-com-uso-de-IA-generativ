@@ -1,0 +1,682 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API de Agendamento Médico",
+    "description": "API RESTful para sistema de agendamento de consultas médicas com autenticação JWT e controle de acesso baseado em funções (RBAC).",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Suporte",
+      "email": "admin@clinica.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api/v1",
+      "description": "Servidor local"
+    }
+  ],
+  "tags": [
+    { "name": "Autenticação", "description": "Endpoints de login e geração de token JWT" },
+    { "name": "Pacientes", "description": "Autocadastro de pacientes" },
+    { "name": "Médicos", "description": "Gestão de médicos" },
+    { "name": "Agendamentos", "description": "Gestão de consultas médicas" }
+  ],
+  "paths": {
+    "/login": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Realizar login",
+        "description": "Autentica o usuário (ADMIN, PACIENTE ou MEDICO) com e-mail e senha, retornando um token JWT.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos obrigatórios não fornecidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "Os campos email e senha são obrigatórios."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inválidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "E-mail ou senha inválidos."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pacientes": {
+      "post": {
+        "tags": ["Pacientes"],
+        "summary": "Autocadastro de paciente",
+        "description": "Permite que qualquer visitante cadastre sua conta como paciente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PacienteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Paciente cadastrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacienteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos obrigatórios não fornecidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "Todos os campos são obrigatórios: nome, cpf, email, telefone, senha."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "E-mail ou CPF já cadastrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "E-mail já cadastrado no sistema."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/medicos": {
+      "post": {
+        "tags": ["Médicos"],
+        "summary": "Cadastrar médico (somente ADMIN)",
+        "description": "Cadastra um novo médico no sistema. Somente usuários com perfil ADMIN podem acessar.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MedicoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Médico cadastrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos obrigatórios não fornecidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "Todos os campos são obrigatórios: nome, crm, especialidade, email, senha."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token não fornecido ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "Token não fornecido."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "Acesso negado. Permissão insuficiente."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CRM ou e-mail já cadastrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "CRM já cadastrado no sistema."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Médicos"],
+        "summary": "Listar médicos",
+        "description": "Lista todos os médicos cadastrados no sistema. Requer apenas autenticação (qualquer perfil).",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de médicos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MedicoResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token não fornecido ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agendamentos/disponibilidade": {
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Consultar disponibilidade",
+        "description": "Retorna os horários livres de um médico em uma determinada data.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "medicoId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "ID do médico"
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date" },
+            "description": "Data para consulta (formato YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Horários disponíveis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisponibilidadeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros inválidos ou data em fim de semana",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token não fornecido ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Médico não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "Médico não encontrado."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agendamentos": {
+      "post": {
+        "tags": ["Agendamentos"],
+        "summary": "Criar agendamento",
+        "description": "Permite que um paciente autenticado agende uma consulta com um médico.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agendamento criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgendamentoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos, horário fora do permitido ou antecedência insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token não fornecido ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão insuficiente (não é PACIENTE)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Médico não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de horário (médico ou paciente já possuem consulta)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Agendamentos"],
+        "summary": "Consultar meus agendamentos",
+        "description": "Retorna todos os agendamentos do paciente autenticado (futuras e histórico).",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de agendamentos do paciente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgendamentoResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token não fornecido ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agendamentos/{id}/cancelar": {
+      "patch": {
+        "tags": ["Agendamentos"],
+        "summary": "Cancelar agendamento",
+        "description": "Cancela uma consulta agendada. Necessário informar o motivo. Cancelamento só é permitido com no mínimo 24 horas de antecedência.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "ID do agendamento"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelamentoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agendamento cancelado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgendamentoCanceladoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Motivo não informado, agendamento já cancelado ou antecedência insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token não fornecido ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão insuficiente ou agendamento não pertence ao paciente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agendamento não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                },
+                "example": {
+                  "erro": "Agendamento não encontrado."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token JWT obtido via endpoint /login"
+      }
+    },
+    "schemas": {
+      "Erro": {
+        "type": "object",
+        "properties": {
+          "erro": {
+            "type": "string",
+            "description": "Mensagem de erro"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "senha"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@clinica.com"
+          },
+          "senha": {
+            "type": "string",
+            "example": "Admin@123"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token JWT para autenticação",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "usuario": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "nome": { "type": "string", "example": "Administrador do Sistema" },
+              "email": { "type": "string", "format": "email" },
+              "role": { "type": "string", "enum": ["ADMIN", "PACIENTE", "MEDICO"] }
+            }
+          }
+        }
+      },
+      "PacienteRequest": {
+        "type": "object",
+        "required": ["nome", "cpf", "email", "telefone", "senha"],
+        "properties": {
+          "nome": { "type": "string", "example": "João da Silva" },
+          "cpf": { "type": "string", "example": "123.456.789-00" },
+          "email": { "type": "string", "format": "email", "example": "joao@email.com" },
+          "telefone": { "type": "string", "example": "(11) 99999-0000" },
+          "senha": { "type": "string", "example": "Senha@123" }
+        }
+      },
+      "PacienteResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "cpf": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "telefone": { "type": "string" },
+          "role": { "type": "string", "example": "PACIENTE" },
+          "criadoEm": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MedicoRequest": {
+        "type": "object",
+        "required": ["nome", "crm", "especialidade", "email", "senha"],
+        "properties": {
+          "nome": { "type": "string", "example": "Dra. Maria Oliveira" },
+          "crm": { "type": "string", "example": "CRM/SP 123456" },
+          "especialidade": { "type": "string", "example": "Cardiologia" },
+          "email": { "type": "string", "format": "email", "example": "maria@clinica.com" },
+          "senha": { "type": "string", "example": "Medico@123" }
+        }
+      },
+      "MedicoResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "crm": { "type": "string" },
+          "especialidade": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "example": "MEDICO" },
+          "criadoEm": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DisponibilidadeResponse": {
+        "type": "object",
+        "properties": {
+          "medicoId": { "type": "string", "format": "uuid" },
+          "medico": { "type": "string", "example": "Dra. Maria Oliveira" },
+          "especialidade": { "type": "string", "example": "Cardiologia" },
+          "data": { "type": "string", "format": "date", "example": "2024-12-20" },
+          "horariosDisponiveis": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"]
+          }
+        }
+      },
+      "AgendamentoRequest": {
+        "type": "object",
+        "required": ["medicoId", "data", "horario"],
+        "properties": {
+          "medicoId": { "type": "string", "format": "uuid", "description": "ID do médico" },
+          "data": { "type": "string", "format": "date", "example": "2024-12-20", "description": "Data da consulta (YYYY-MM-DD)" },
+          "horario": { "type": "string", "example": "10:00", "description": "Horário da consulta (HH:mm)" }
+        }
+      },
+      "AgendamentoResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "pacienteId": { "type": "string", "format": "uuid" },
+          "medicoId": { "type": "string", "format": "uuid" },
+          "medicoNome": { "type": "string" },
+          "especialidade": { "type": "string" },
+          "data": { "type": "string", "format": "date" },
+          "horario": { "type": "string", "example": "10:00" },
+          "status": { "type": "string", "enum": ["AGENDADA", "CANCELADA"], "example": "AGENDADA" },
+          "criadoEm": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CancelamentoRequest": {
+        "type": "object",
+        "required": ["motivo"],
+        "properties": {
+          "motivo": { "type": "string", "example": "Imprevisto pessoal" }
+        }
+      },
+      "AgendamentoCanceladoResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "pacienteId": { "type": "string", "format": "uuid" },
+          "medicoId": { "type": "string", "format": "uuid" },
+          "medicoNome": { "type": "string" },
+          "especialidade": { "type": "string" },
+          "data": { "type": "string", "format": "date" },
+          "horario": { "type": "string" },
+          "status": { "type": "string", "example": "CANCELADA" },
+          "motivoCancelamento": { "type": "string" },
+          "canceladoEm": { "type": "string", "format": "date-time" },
+          "criadoEm": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}
